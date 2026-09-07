@@ -1,5 +1,7 @@
 import { LogOut, Moon, Sun } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { NavLink, Navigate, Outlet } from 'react-router-dom';
+import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { TRAINEE_NAV } from '../auth/roles';
 import { useTheme } from '../context/ThemeContext';
@@ -8,9 +10,18 @@ import { confirmSignOut } from '../ui/confirm';
 export default function TraineeShell() {
   const { session, isTrainee, signOut } = useAuth();
   const { theme, toggleTheme, getThemeColor } = useTheme();
+  // Whether the Checklist tab is switched on system-wide (Settings.jsx, admin-only) —
+  // defaults to true so it doesn't flicker away while this loads.
+  const [checklistEnabled, setChecklistEnabled] = useState(true);
+
+  useEffect(() => {
+    api.get('/settings').then((s) => setChecklistEnabled(s.traineeChecklistEnabled)).catch(() => {});
+  }, []);
 
   if (!session) return <Navigate to="/login" replace />;
   if (!isTrainee) return <Navigate to="/dashboard" replace />;
+
+  const navItems = TRAINEE_NAV.filter((item) => item.key !== 'mychecklist' || checklistEnabled);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
@@ -27,11 +38,11 @@ export default function TraineeShell() {
       </div>
 
       <div className="flex-1 p-4 pb-24 overflow-y-auto">
-        <Outlet />
+        <Outlet context={{ checklistEnabled }} />
       </div>
 
       <nav className="fixed bottom-0 left-0 right-0 flex bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-20">
-        {TRAINEE_NAV.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink key={item.key} to={item.path}

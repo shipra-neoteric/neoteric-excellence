@@ -1,5 +1,6 @@
 import { Camera, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Navigate, useOutletContext } from 'react-router-dom';
 import { api } from '../../api/client';
 import AlertBanner from '../../components/AlertBanner';
 import { useTheme } from '../../context/ThemeContext';
@@ -8,6 +9,7 @@ import { fileToDataUrl } from '../../ui/file';
 
 export default function MyChecklist() {
   const { getThemeColor } = useTheme();
+  const { checklistEnabled } = useOutletContext();
   const [items, setItems] = useState(null);
   const [error, setError] = useState(null);
   const [uploadingIndex, setUploadingIndex] = useState(null);
@@ -32,6 +34,7 @@ export default function MyChecklist() {
     }
   }
 
+  if (!checklistEnabled) return <Navigate to="/t/today" replace />;
   if (error) return <AlertBanner level="crit">{error}</AlertBanner>;
   if (!items) return <div className="text-sm text-gray-400">Loading…</div>;
 
