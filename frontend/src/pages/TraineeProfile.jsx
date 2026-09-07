@@ -201,7 +201,7 @@ function RatingsTab({ ratings }) {
   );
 }
 
-function VideosTab({ videos }) {
+function VideosTab({ videos, onReset, canReset }) {
   if (!videos) return <div className="text-sm text-gray-400">Loading…</div>;
   if (!videos.length) return <div className="text-sm text-gray-400">No videos watched yet.</div>;
   return (
@@ -211,12 +211,18 @@ function VideosTab({ videos }) {
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">{v.title}</div>
             <div className="text-xs text-gray-400">{v.channel}</div>
+            {v.flaggedForSkipping && (
+              <div className="text-xs font-medium text-red-600 dark:text-red-400 mt-0.5">Skipped ahead — not counted as watched</div>
+            )}
           </div>
           <div className="w-24 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
-            <div className="h-full bg-green-500" style={{ width: `${v.pct ?? 0}%` }} />
+            <div className={`h-full ${v.flaggedForSkipping ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${v.pct ?? 0}%` }} />
           </div>
           <span className="text-xs font-mono text-gray-500 dark:text-gray-400 w-10 text-right flex-shrink-0">{v.pct != null ? `${v.pct}%` : '—'}</span>
           {v.completedAt && <Check className="w-4 h-4 text-green-600 flex-shrink-0" />}
+          {v.flaggedForSkipping && canReset && (
+            <button onClick={() => onReset(v.videoId)} className={`${btn.secondary} !px-2.5 !py-1 text-xs flex-shrink-0`}>Reset</button>
+          )}
         </div>
       ))}
     </div>
@@ -253,6 +259,15 @@ export default function TraineeProfile() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, code]);
+
+  async function resetVideo(videoId) {
+    try {
+      await api.put(`/videos/progress/${code}/${videoId}/reset`, {});
+      setVideos(await api.get(`/videos/progress/${code}`));
+    } catch (e) {
+      setError(e.message);
+    }
+  }
 
   async function signItem(index) {
     try {
@@ -310,7 +325,7 @@ export default function TraineeProfile() {
       {tab === 'checklist' && <ChecklistTab items={checklist} onSign={signItem} canSign={can('checklist', 'edit')} />}
       {tab === 'assessments' && <AssessmentsTab records={assessments} baseline={detail.baseline} />}
       {tab === 'ratings' && <RatingsTab ratings={ratings} />}
-      {tab === 'videos' && <VideosTab videos={videos} />}
+      {tab === 'videos' && <VideosTab videos={videos} onReset={resetVideo} canReset={can('content', 'edit')} />}
 
       {editing && (
         <TraineeDrawer code={code} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); reload(); }} />

@@ -77,17 +77,39 @@ router.get('/progress/:code', requirePermission('content', 'view'), async (req, 
       durationS: p.video.durationS ?? null,
       pct: p.video.durationS ? Math.min(100, Math.round((p.secondsWatched / p.video.durationS) * 100)) : null,
       completedAt: p.completedAt ? p.completedAt.toISOString() : null,
+      flaggedForSkipping: !!p.flaggedForSkipping,
     })));
   } catch (e) {
     next(e);
   }
 });
 
-// POST /api/videos/:id/progress — {seconds} — trainee's own watch progress.
-// Marked completed at 90% of duration, not 100% (SPEC.md §5).
+// PUT /api/videos/progress/:code/:videoId/reset — staff clears a flagged/stuck
+// progress record so the trainee can watch it properly and earn credit again.
+router.put('/progress/:code/:videoId/reset', requirePermission('content', 'edit'), async (req, res, next) => {
+  try {
+    const trainee = await Trainee.findOne({ code: req.params.code });
+    if (!trainee) return res.status(404).json({ error: 'unknown trainee' });
+
+    const updated = await VideoProgress.findOneAndUpdate(
+      { trainee: trainee._id, video: req.params.videoId },
+      { $set: { secondsWatched: 0, completedAt: null, flaggedForSkipping: false } },
+      { upsert: true, new: true },
+    );
+    res.json({ reset: true, videoId: req.params.videoId, secondsWatched: updated.secondsWatched });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// POST /api/videos/:id/progress — {seconds, skipped} — trainee's own watch progress.
+// `skipped` comes from the player detecting a forward jump (YouTubePlayer.jsx) — once
+// true (this call or any earlier one), `completedAt` can never be (re)set until staff
+// resets the record via the route above. Marked completed at 90% of duration, not
+// 100% (SPEC.md §5).
 router.post('/:id/progress', requireRole('trainee'), async (req, res, next) => {
   try {
-    const { seconds } = req.body;
+    const { seconds, skipped } = req.body;
     if (typeof seconds !== 'number') return res.status(400).json({ error: 'seconds required' });
 
     const trainee = await Trainee.findOne({ person: req.user.sub });
@@ -98,8 +120,12 @@ router.post('/:id/progress', requireRole('trainee'), async (req, res, next) => {
 
     const existing = await VideoProgress.findOne({ trainee: trainee._id, video: video._id });
     const maxSeconds = Math.max(seconds, existing?.secondsWatched ?? 0);
-    const update = { secondsWatched: maxSeconds };
-    if (!existing?.completedAt && video.durationS && maxSeconds >= video.durationS * 0.9) {
+    const flagged = !!skipped || !!existing?.flaggedForSkipping;
+
+    const update = { secondsWatched: maxSeconds, flaggedForSkipping: flagged };
+    if (flagged) {
+      update.completedAt = null;
+    } else if (!existing?.completedAt && video.durationS && maxSeconds >= video.durationS * 0.9) {
       update.completedAt = new Date();
     }
     await VideoProgress.findOneAndUpdate(

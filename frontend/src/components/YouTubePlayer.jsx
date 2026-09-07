@@ -1,5 +1,5 @@
-import { X } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { Pause, Play, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { api } from '../api/client';
 
@@ -16,37 +16,76 @@ function loadYouTubeApi() {
   return apiPromise;
 }
 
+// How much slack (seconds) a forward jump gets before it counts as a skip — covers
+// interval jitter and brief buffering stalls, not enough to skip past real content.
+const SKIP_TOLERANCE_S = 3;
+const CHECK_INTERVAL_MS = 2000;
+
 // SPEC.md §5/§6: bind onStateChange, post progress every 15s and on pause; default
 // to 480p since trainees are paying for their own data.
+//
+// Native YouTube controls are hidden (playerVars.controls: 0, disablekb: 1) and
+// replaced with a play/pause-only button — no seek bar, no keyboard seeking. On top
+// of that, currentTime is polled every 2s: any jump forward beyond real elapsed time
+// plus a small tolerance is treated as a skip — the player snaps back to the last
+// known-good position and the video is flagged so it can never count as watched
+// until staff resets it (backend/src/routes/videos.js).
 export default function YouTubePlayer({ video, onClose }) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
-  const intervalRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+  const [skipWarning, setSkipWarning] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    let checkInterval;
+    let postInterval;
+    let warningTimeout;
+    let lastGoodTime = 0;
+    let lastCheckedAt = Date.now();
+    let skippedSinceLastPost = false;
 
     function postProgress() {
       const p = playerRef.current;
       if (!p?.getCurrentTime) return;
       const seconds = Math.floor(p.getCurrentTime());
-      api.post(`/videos/${video._id}/progress`, { seconds }).catch(() => {});
+      api.post(`/videos/${video._id}/progress`, { seconds, skipped: skippedSinceLastPost }).catch(() => {});
+      skippedSinceLastPost = false;
+    }
+
+    function checkForSkip() {
+      const p = playerRef.current;
+      if (!p?.getCurrentTime) return;
+      const now = Date.now();
+      const elapsedS = (now - lastCheckedAt) / 1000;
+      const current = p.getCurrentTime();
+      const allowed = lastGoodTime + elapsedS + SKIP_TOLERANCE_S;
+      if (current > allowed) {
+        p.seekTo(lastGoodTime, true);
+        skippedSinceLastPost = true;
+        setSkipWarning(true);
+        clearTimeout(warningTimeout);
+        warningTimeout = setTimeout(() => setSkipWarning(false), 3000);
+      } else {
+        lastGoodTime = current;
+      }
+      lastCheckedAt = now;
     }
 
     loadYouTubeApi().then((YT) => {
       if (cancelled || !containerRef.current) return;
       playerRef.current = new YT.Player(containerRef.current, {
         videoId: video.youtubeId,
-        playerVars: { vq: 'small' },
+        playerVars: { vq: 'small', controls: 0, disablekb: 1, modestbranding: 1, rel: 0 },
         events: {
-          onReady: (e) => { try { e.target.setPlaybackQuality('small'); } catch { /* not all clients honor this */ } },
+          onReady: (e) => {
+            try { e.target.setPlaybackQuality('small'); } catch { /* not all clients honor this */ }
+            checkInterval = setInterval(checkForSkip, CHECK_INTERVAL_MS);
+            postInterval = setInterval(postProgress, 15000);
+          },
           onStateChange: (e) => {
-            if (e.data === YT.PlayerState.PLAYING) {
-              intervalRef.current = setInterval(postProgress, 15000);
-            } else {
-              clearInterval(intervalRef.current);
-              if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) postProgress();
-            }
+            setPlaying(e.data === YT.PlayerState.PLAYING);
+            if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) postProgress();
           },
         },
       });
@@ -54,10 +93,18 @@ export default function YouTubePlayer({ video, onClose }) {
 
     return () => {
       cancelled = true;
-      clearInterval(intervalRef.current);
+      clearInterval(checkInterval);
+      clearInterval(postInterval);
+      clearTimeout(warningTimeout);
       playerRef.current?.destroy?.();
     };
   }, [video._id, video.youtubeId]);
+
+  function togglePlay() {
+    const p = playerRef.current;
+    if (!p) return;
+    if (playing) p.pauseVideo(); else p.playVideo();
+  }
 
   return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" onClick={onClose}>
@@ -74,7 +121,19 @@ export default function YouTubePlayer({ video, onClose }) {
           </button>
         </div>
         <div className="p-4">
-          <div ref={containerRef} className="aspect-video w-full" />
+          <div className="relative">
+            <div ref={containerRef} className="aspect-video w-full" />
+            {skipWarning && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/80 text-white text-xs font-medium px-3 py-1.5 rounded-full pointer-events-none">
+                Skipping ahead isn't allowed — rewound to where you left off.
+              </div>
+            )}
+          </div>
+          <button onClick={togglePlay}
+            className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600">
+            {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+            {playing ? 'Pause' : 'Play'}
+          </button>
         </div>
       </div>
     </div>,
