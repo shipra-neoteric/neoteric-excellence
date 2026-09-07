@@ -72,6 +72,12 @@ export default function AppShell() {
         </button>
       </div>
 
+      <button onClick={toggleCollapsed}
+        className="hidden lg:flex items-center justify-center gap-2 py-3 border-b border-gray-100 dark:border-gray-700
+          text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors flex-shrink-0">
+        {collapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4" /><span className="text-xs">Collapse</span></>}
+      </button>
+
       {!collapsed && (
         <div className="px-2.5 pt-4 pb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider pointer-events-none">
           Menu
@@ -83,12 +89,6 @@ export default function AppShell() {
             collapsed={collapsed} getThemeColor={getThemeColor} onNavigate={() => setMobileOpen(false)} />
         ))}
       </div>
-
-      <button onClick={toggleCollapsed}
-        className="hidden lg:flex items-center justify-center gap-2 py-3 border-t border-gray-100 dark:border-gray-700
-          text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors flex-shrink-0">
-        {collapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4" /><span className="text-xs">Collapse</span></>}
-      </button>
     </nav>
   );
 
