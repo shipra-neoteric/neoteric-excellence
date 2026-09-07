@@ -38,10 +38,10 @@ export async function writeMonthlyPack(res, { batchId, batch, month }) {
 
   const doc = new PDFDocument({ margin: 50, size: 'A4' });
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="neev-monthly-pack-${month}.pdf"`);
+  res.setHeader('Content-Disposition', `attachment; filename="neoteric-excellence-monthly-pack-${month}.pdf"`);
   doc.pipe(res);
 
-  doc.fontSize(18).text('NEEV Tracker — Monthly Pack', { align: 'left' });
+  doc.fontSize(18).text('Neoteric Excellence — Monthly Pack', { align: 'left' });
   doc.fontSize(10).fillColor('#555')
     .text(`Batch ${batchId} · ${month} · generated ${new Date().toISOString().slice(0, 10)}`);
   doc.moveDown(1.2);

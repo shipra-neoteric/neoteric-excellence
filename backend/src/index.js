@@ -62,7 +62,7 @@ connectDB()
   .then(() => seedIfEmpty())
   .then(() => {
     app.listen(port, () => {
-      console.log(`NEEV Tracker API listening on port ${port}`);
+      console.log(`Neoteric Excellence API listening on port ${port}`);
     });
   })
   .catch((err) => {

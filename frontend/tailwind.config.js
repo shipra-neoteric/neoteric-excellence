@@ -5,7 +5,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // NEEV's single fixed brand color (no per-company theming — one tenant)
+        // Neoteric Excellence's single fixed brand color (no per-company theming — one tenant)
         primary: {
           50: '#e3eaf2', 100: '#c7d5e5', 200: '#8fb4de', 300: '#5c91e3',
           400: '#2f5f8f', 500: '#12355b', 600: '#0f2c4b', 700: '#0c233c',

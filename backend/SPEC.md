@@ -1,4 +1,4 @@
-# NEEV Tracker — build specification
+# Neoteric Excellence — build specification
 
 Everything needed to build the app without a kickoff call.
 Open `docs/app-prototype.html` in a browser alongside this file: **the prototype is the

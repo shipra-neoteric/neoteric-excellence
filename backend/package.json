@@ -1,9 +1,9 @@
 {
-  "name": "neev-tracker-backend",
+  "name": "neoteric-excellence-backend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "NEEV Tracker API — see app/SPEC.md",
+  "description": "Neoteric Excellence API — see backend/SPEC.md",
   "main": "src/index.js",
   "scripts": {
     "dev": "node --watch src/index.js",

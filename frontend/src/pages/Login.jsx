@@ -161,9 +161,9 @@ export default function Login() {
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 p-6 w-full max-w-[380px]">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-            style={{ backgroundColor: getThemeColor() }}>NT</div>
+            style={{ backgroundColor: getThemeColor() }}>NE</div>
           <div>
-            <div className="font-bold text-gray-900 dark:text-white">NEEV Tracker</div>
+            <div className="font-bold text-gray-900 dark:text-white">Neoteric Excellence</div>
             <div className="text-[11px] text-gray-400 dark:text-gray-500">Batch 2026-01</div>
           </div>
         </div>

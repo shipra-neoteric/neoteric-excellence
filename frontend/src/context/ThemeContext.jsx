@@ -1,7 +1,7 @@
 import { createContext, useContext, useState } from 'react';
 
 const ThemeContext = createContext(null);
-const PRIMARY = '#12355b'; // NEEV's single fixed brand color — no per-company theming (one tenant)
+const PRIMARY = '#12355b'; // Neoteric Excellence's single fixed brand color — no per-company theming (one tenant)
 
 // The actual "no flash" application happens in a blocking inline script in
 // index.html's <head>, before React even mounts (style guide §4) — this just

@@ -59,10 +59,10 @@ export default function AppShell() {
       lg:backdrop-blur-xl lg:shadow-[0_8px_30px_rgb(0,0,0,0.04)] ${collapsed ? 'lg:w-20' : 'lg:w-64'}`}>
       <div className="h-16 flex items-center gap-3 px-4 border-b border-gray-100 dark:border-gray-700 flex-shrink-0">
         <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-          style={{ backgroundColor: getThemeColor() }}>NT</div>
+          style={{ backgroundColor: getThemeColor() }}>NE</div>
         {!collapsed && (
           <div className="min-w-0">
-            <div className="font-bold text-sm text-gray-900 dark:text-white truncate">NEEV Tracker</div>
+            <div className="font-bold text-sm text-gray-900 dark:text-white truncate">Neoteric Excellence</div>
             <div className="text-[11px] text-gray-400 dark:text-gray-500">Batch 2026-01</div>
           </div>
         )}
@@ -106,7 +106,7 @@ export default function AppShell() {
             className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0">
             <Menu className="w-5 h-5" />
           </button>
-          <h1 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white flex-1 truncate">{current?.label ?? 'NEEV Tracker'}</h1>
+          <h1 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white flex-1 truncate">{current?.label ?? 'Neoteric Excellence'}</h1>
           <button onClick={toggleTheme} aria-label="Toggle theme"
             className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95 flex-shrink-0">
             {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
