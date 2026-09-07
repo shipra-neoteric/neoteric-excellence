@@ -1,6 +1,6 @@
 import { LogOut, Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { NavLink, Navigate, Outlet } from 'react-router-dom';
+import { Link, NavLink, Navigate, Outlet } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { TRAINEE_NAV } from '../auth/roles';
@@ -26,7 +26,12 @@ export default function TraineeShell() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       <div className="h-14 flex items-center gap-3 px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
-        <h1 className="text-base font-bold text-gray-900 dark:text-white flex-1 truncate">{session.name}</h1>
+        <Link to="/t/profile" className="flex items-center gap-2 flex-1 min-w-0">
+          <span className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-[11px] font-bold text-gray-500 dark:text-gray-300 flex-shrink-0">
+            {session.name?.split(' ').filter(Boolean).map((p) => p[0]).slice(0, 2).join('').toUpperCase()}
+          </span>
+          <h1 className="text-base font-bold text-gray-900 dark:text-white truncate">{session.name}</h1>
+        </Link>
         <button onClick={toggleTheme} aria-label="Toggle theme"
           className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all active:scale-95">
           {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}

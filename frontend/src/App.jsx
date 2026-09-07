@@ -18,6 +18,7 @@ import Today from './pages/trainee/Today';
 import MyLog from './pages/trainee/MyLog';
 import MyBand from './pages/trainee/MyBand';
 import MyChecklist from './pages/trainee/MyChecklist';
+import MyProfile from './pages/trainee/MyProfile';
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
           <Route path="/t/log" element={<MyLog />} />
           <Route path="/t/band" element={<MyBand />} />
           <Route path="/t/checklist" element={<MyChecklist />} />
+          <Route path="/t/profile" element={<MyProfile />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
