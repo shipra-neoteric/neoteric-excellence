@@ -61,10 +61,16 @@ export default function AppShell() {
         <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
           style={{ backgroundColor: getThemeColor() }}>NE</div>
         {!collapsed && (
-          <div className="min-w-0">
-            <div className="font-bold text-sm text-gray-900 dark:text-white truncate">Neoteric Excellence</div>
-            <div className="text-[11px] text-gray-400 dark:text-gray-500">Batch 2026-01</div>
-          </div>
+          <>
+            <div className="min-w-0">
+              <div className="font-bold text-sm text-gray-900 dark:text-white truncate">Neoteric Excellence</div>
+              <div className="text-[11px] text-gray-400 dark:text-gray-500">Batch 2026-01</div>
+            </div>
+            <button onClick={toggleCollapsed} aria-label="Collapse sidebar"
+              className="hidden lg:flex ml-auto w-8 h-8 items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </>
         )}
         <button onClick={() => setMobileOpen(false)} aria-label="Close menu"
           className="lg:hidden ml-auto w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -72,11 +78,13 @@ export default function AppShell() {
         </button>
       </div>
 
-      <button onClick={toggleCollapsed}
-        className="hidden lg:flex items-center justify-center gap-2 py-3 border-b border-gray-100 dark:border-gray-700
-          text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors flex-shrink-0">
-        {collapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4" /><span className="text-xs">Collapse</span></>}
-      </button>
+      {collapsed && (
+        <button onClick={toggleCollapsed} aria-label="Expand sidebar"
+          className="hidden lg:flex items-center justify-center py-3 border-b border-gray-100 dark:border-gray-700
+            text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors flex-shrink-0">
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      )}
 
       {!collapsed && (
         <div className="px-2.5 pt-4 pb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider pointer-events-none">
