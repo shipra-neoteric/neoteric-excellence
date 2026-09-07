@@ -10,7 +10,6 @@ import { BandBadge } from './StatusBadge';
 import Drawer from './Drawer';
 import ThemedSelect from './theme/ThemedSelect';
 
-const PODS = [1, 2, 3, 4];
 const STATUSES = ['active', 'exited', 'gateway_passed', 'confirmed'];
 
 const emptyForm = { name: '', phone: '', email: '', password: '', branch: '', pod: 1, baseline: '', status: 'active' };
@@ -21,8 +20,15 @@ export default function TraineeDrawer({ code, onClose, onSaved }) {
   const isCreate = !code;
   const [detail, setDetail] = useState(null);
   const [form, setForm] = useState(emptyForm);
+  const [pods, setPods] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+
+  // Pods are no longer a fixed set of 4 — fetch the real, current list (see
+  // PodBuddyPanel.jsx, backend/src/routes/pods.js) instead of hardcoding.
+  useEffect(() => {
+    api.get('/pods').then(setPods).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (isCreate) {
@@ -148,7 +154,9 @@ export default function TraineeDrawer({ code, onClose, onSaved }) {
             <div>
               <label className={labelClass}>Pod</label>
               <ThemedSelect value={form.pod} onChange={(v) => set('pod', v)}
-                options={PODS.map((p) => ({ value: p, label: `Pod ${p}` }))} />
+                options={(pods ?? [])
+                  .map((p) => ({ value: parseInt(String(p.name).replace(/\D/g, ''), 10), label: p.name }))
+                  .sort((a, b) => a.value - b.value)} />
             </div>
             <div>
               <label className={labelClass}>Baseline (D01)</label>

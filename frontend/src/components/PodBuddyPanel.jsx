@@ -1,16 +1,24 @@
-import { ChevronDown, Users2 } from 'lucide-react';
+import { ChevronDown, Plus, Trash2, Users2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
+import { useAuth } from '../auth/AuthContext';
+import { btn } from '../ui/classes';
+import { confirmDelete } from '../ui/confirm';
 import ThemedSelect from './theme/ThemedSelect';
 
-// Pod → buddy assignment. Reassigning cascades to every trainee currently in that pod
-// server-side (Trainee.buddy is a snapshot, not a live join) — see backend/src/routes/pods.js.
+// Pod → buddy assignment, plus adding/removing pods themselves. Reassigning a buddy
+// cascades to every trainee currently in that pod server-side (Trainee.buddy is a
+// snapshot, not a live join) — see backend/src/routes/pods.js.
 export default function PodBuddyPanel() {
+  const { can } = useAuth();
   const [open, setOpen] = useState(false);
   const [pods, setPods] = useState(null);
   const [buddies, setBuddies] = useState(null);
   const [saving, setSaving] = useState(null);
+  const [adding, setAdding] = useState(false);
   const [error, setError] = useState(null);
+
+  const canDelete = can('trainees', 'delete');
 
   function reload() {
     Promise.all([api.get('/pods'), api.get('/users')]).then(([p, users]) => {
@@ -33,6 +41,30 @@ export default function PodBuddyPanel() {
     }
   }
 
+  async function addPod() {
+    setAdding(true);
+    setError(null);
+    try {
+      await api.post('/pods', {});
+      reload();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function removePod(p) {
+    if (!(await confirmDelete(p.name))) return;
+    setError(null);
+    try {
+      await api.delete(`/pods/${p.id}`);
+      reload();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 mb-3 overflow-hidden">
       <button onClick={() => setOpen((o) => !o)}
@@ -47,16 +79,29 @@ export default function PodBuddyPanel() {
           {!pods || !buddies ? (
             <div className="text-sm text-gray-400">Loading…</div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {pods.map((p) => (
-                <div key={p.id}>
-                  <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{p.name}</div>
-                  <ThemedSelect value={p.buddyId} onChange={(v) => assign(p.id, v)}
-                    placeholder={saving === p.id ? 'Saving…' : 'Choose a buddy'}
-                    options={buddies.map((b) => ({ value: b.id, label: b.name }))} />
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {pods.map((p) => (
+                  <div key={p.id}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{p.name}</span>
+                      {canDelete && (
+                        <button onClick={() => removePod(p)} title="Delete pod"
+                          className="w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                    <ThemedSelect value={p.buddyId} onChange={(v) => assign(p.id, v)}
+                      placeholder={saving === p.id ? 'Saving…' : 'Choose a buddy'}
+                      options={buddies.map((b) => ({ value: b.id, label: b.name }))} />
+                  </div>
+                ))}
+              </div>
+              <button onClick={addPod} disabled={adding} className={`${btn.secondary} flex items-center gap-1.5 text-xs mt-3`}>
+                <Plus className="w-3.5 h-3.5" /> {adding ? 'Adding…' : 'Add pod'}
+              </button>
+            </>
           )}
         </div>
       )}
