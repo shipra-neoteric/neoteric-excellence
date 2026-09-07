@@ -18,12 +18,16 @@ const router = Router();
 
 // GET /api/modules?with=videos — everyone except Bharti (SPEC.md §4: "Watch module
 // videos | ✓ | ✓ | ✓ | ✓ |" — trainee, buddy, coordinator, supervisor). Trainees only
-// see modules already released — never future content (LMS-style: today and earlier
-// only). Staff see everything regardless, since they manage it.
+// see modules that have actually been scheduled and whose date has arrived — an
+// unscheduled module (releaseDate not set) stays hidden, it does NOT default to
+// visible, otherwise every module goes out to every trainee on day one the moment
+// it's created, before staff ever pace the curriculum. Once released, a module never
+// gets hidden again (no $lte upper bound). Staff see everything regardless, since
+// they manage it.
 router.get('/', requireRole('trainee', 'buddy', 'coordinator', 'supervisor', 'admin'), async (req, res, next) => {
   try {
     const filter = req.user.role === 'trainee'
-      ? { $or: [{ releaseDate: null }, { releaseDate: { $lte: new Date() } }] }
+      ? { releaseDate: { $ne: null, $lte: new Date() } }
       : {};
     const modules = await Module.find(filter).sort('sequence').lean();
     if (req.query.with !== 'videos') return res.json(modules);

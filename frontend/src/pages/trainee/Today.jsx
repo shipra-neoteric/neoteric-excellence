@@ -27,12 +27,6 @@ export default function Today() {
 
   return (
     <div>
-      <div className="mb-3">
-        <AlertBanner level="info">
-          Videos are pre-reading, not a substitute for the module. They need a connection —
-          prefer site wifi in the training room over your own data.
-        </AlertBanner>
-      </div>
       <div className="space-y-2">
         {modules.map((m) => {
           const open = openModule === m._id;

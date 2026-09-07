@@ -6,8 +6,9 @@ const moduleSchema = new mongoose.Schema({
   department: { type: String, enum: ['SUP', 'QC', 'MEA', 'STR'], required: true },
   handbookSection: String,
   sequence: { type: Number, required: true },
-  // LMS-style content gating: null = available now; otherwise a trainee can't see
-  // this module (or its videos/notes) until this date. Staff always see everything,
+  // LMS-style content gating: null = not yet scheduled, hidden from trainees; once
+  // set, a trainee can't see this module (or its videos/notes) until this date, and
+  // sees it permanently once the date arrives. Staff always see everything,
   // regardless of releaseDate, for management purposes.
   releaseDate: { type: Date, default: null },
 });
