@@ -26,10 +26,13 @@ const CHECK_INTERVAL_MS = 2000;
 //
 // Native YouTube controls are hidden (playerVars.controls: 0, disablekb: 1) and
 // replaced with a play/pause-only button — no seek bar, no keyboard seeking. On top
-// of that, currentTime is polled every 2s: any jump forward beyond real elapsed time
-// plus a small tolerance is treated as a skip — the player snaps back to the last
-// known-good position and the video is flagged so it can never count as watched
-// until staff resets it (backend/src/routes/videos.js).
+// of that, currentTime is polled every 2s against `maxReached` — the furthest point
+// ever legitimately played to. Rewinding to re-watch something (and seeking back
+// forward, up to that same furthest point) is always allowed — only a jump past
+// `maxReached` counts as a skip, since that's the only way to reach content that
+// hasn't actually played in real time. A skip snaps back to `maxReached` and flags
+// the video so it can never count as watched until staff resets it
+// (backend/src/routes/videos.js).
 export default function YouTubePlayer({ video, onClose }) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
@@ -41,14 +44,14 @@ export default function YouTubePlayer({ video, onClose }) {
     let checkInterval;
     let postInterval;
     let warningTimeout;
-    let lastGoodTime = 0;
+    let maxReached = 0;
     let lastCheckedAt = Date.now();
     let skippedSinceLastPost = false;
 
     function postProgress() {
       const p = playerRef.current;
       if (!p?.getCurrentTime) return;
-      const seconds = Math.floor(p.getCurrentTime());
+      const seconds = Math.floor(maxReached);
       api.post(`/videos/${video._id}/progress`, { seconds, skipped: skippedSinceLastPost }).catch(() => {});
       skippedSinceLastPost = false;
     }
@@ -59,15 +62,14 @@ export default function YouTubePlayer({ video, onClose }) {
       const now = Date.now();
       const elapsedS = (now - lastCheckedAt) / 1000;
       const current = p.getCurrentTime();
-      const allowed = lastGoodTime + elapsedS + SKIP_TOLERANCE_S;
-      if (current > allowed) {
-        p.seekTo(lastGoodTime, true);
+      if (current > maxReached + elapsedS + SKIP_TOLERANCE_S) {
+        p.seekTo(maxReached, true);
         skippedSinceLastPost = true;
         setSkipWarning(true);
         clearTimeout(warningTimeout);
         warningTimeout = setTimeout(() => setSkipWarning(false), 3000);
       } else {
-        lastGoodTime = current;
+        maxReached = Math.max(maxReached, current);
       }
       lastCheckedAt = now;
     }
