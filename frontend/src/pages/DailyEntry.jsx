@@ -41,7 +41,11 @@ export default function DailyEntry() {
   useEffect(() => {
     api.get(`/batches/${BATCH_ID}/days`).then((d) => {
       setDays(d);
-      setDayCode(d[d.length - 1].code);
+      // Default to today's actual date, not just the last day in the list — the
+      // backend guarantees today's day exists (batches.js's ensureTodayDay), so this
+      // should always find a match; the fallback is defensive only.
+      const todayStr = new Date().toISOString().slice(0, 10);
+      setDayCode((d.find((day) => day.date === todayStr) ?? d[d.length - 1]).code);
     }).catch((e) => setError(e.message));
   }, []);
 

@@ -27,7 +27,10 @@ export default function MyLog() {
   useEffect(() => {
     api.get(`/batches/${BATCH_ID}/days`).then((d) => {
       setDays(d);
-      setDayCode(d[d.length - 1].code);
+      // Default to today's actual date — not the last day in the list, which used to
+      // silently be several days in the future (see batches.js's ensureTodayDay).
+      const todayStr = new Date().toISOString().slice(0, 10);
+      setDayCode((d.find((day) => day.date === todayStr) ?? d[d.length - 1]).code);
     }).catch((e) => setError(e.message));
 
     const flush = () => syncQueuedLogs(postLog);

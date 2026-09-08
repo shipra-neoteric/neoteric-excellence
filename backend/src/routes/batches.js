@@ -15,6 +15,35 @@ async function findBatch(slug) {
   return Batch.findOne({ slug });
 }
 
+function formatDayLabel(date) {
+  const day = date.getUTCDate();
+  const month = date.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+  const weekday = date.toLocaleString('en-US', { weekday: 'short', timeZone: 'UTC' });
+  return `${day} ${month} · ${weekday}`;
+}
+
+// The day calendar used to be a fixed, one-time-seeded list (10 days, Sept 1-11) with
+// no way to add to it — the day picker defaulted to whichever day was LAST in that
+// list, not today's actual date, so every real submission landed on Sept 11 regardless
+// of when it was actually made, and the whole calendar would have simply run out after
+// Sept 11 with nowhere to log anything. Now: every time the day list is requested,
+// today's Day is auto-created if it doesn't exist yet, so the calendar keeps pace with
+// the real world indefinitely and there's always a "today" to default to.
+async function ensureTodayDay(batch) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStart = new Date(`${todayStr}T00:00:00.000Z`);
+
+  const existing = await Day.findOne({ batch: batch._id, date: todayStart });
+  if (existing) return existing;
+
+  const days = await Day.find({ batch: batch._id }).select('code').lean();
+  const usedNums = days.map((d) => parseInt(String(d.code).replace(/\D/g, ''), 10)).filter((n) => !Number.isNaN(n));
+  const nextNum = (usedNums.length ? Math.max(...usedNums) : 0) + 1;
+  const code = 'D' + String(nextNum).padStart(2, '0');
+
+  return Day.create({ batch: batch._id, code, date: todayStart, label: formatDayLabel(todayStart) });
+}
+
 // GET /api/batches/:id/dashboard — tiles, alerts, band counts (SPEC.md §3)
 router.get('/:id/dashboard', async (req, res, next) => {
   try {
@@ -128,11 +157,13 @@ router.get('/:id/days/:code', async (req, res, next) => {
   }
 });
 
-// GET /api/batches/:id/days — list of days, for the day picker
+// GET /api/batches/:id/days — list of days, for the day picker. Ensures today's day
+// exists before listing (see ensureTodayDay above).
 router.get('/:id/days', async (req, res, next) => {
   try {
     const batch = await findBatch(req.params.id);
     if (!batch) return res.status(404).json({ error: 'unknown batch' });
+    await ensureTodayDay(batch);
     const days = await Day.find({ batch: batch._id }).sort('date').lean();
     res.json(days.map((d) => ({
       id: d._id.toString(), code: d.code, date: d.date.toISOString().slice(0, 10), label: d.label,
