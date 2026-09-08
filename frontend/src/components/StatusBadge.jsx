@@ -17,6 +17,7 @@ export const ATTENDANCE_BADGE = {
   L: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   H: 'bg-slate-200 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300',
 };
+export const ATTENDANCE_NAME = { P: 'Present', A: 'Absent', L: 'Late', H: 'Holiday' };
 
 export const VIDEO_STATUS_BADGE = {
   suggested: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',

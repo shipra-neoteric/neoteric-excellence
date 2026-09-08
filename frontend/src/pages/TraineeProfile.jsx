@@ -1,11 +1,13 @@
-import { ArrowLeft, Check, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
-import { Fragment, useEffect, useState } from 'react';
+import { ArrowLeft, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import AlertBanner from '../components/AlertBanner';
 import DailyLogBody from '../components/DailyLogBody';
-import { Badge, BandBadge, DeptBadge, STATUS_BADGE, STATUS_LABEL } from '../components/StatusBadge';
+import {
+  ATTENDANCE_BADGE, ATTENDANCE_NAME, Badge, BandBadge, DeptBadge, STATUS_BADGE, STATUS_LABEL,
+} from '../components/StatusBadge';
 import TraineeDrawer from '../components/TraineeDrawer';
 import { btn, card, insetPanel, microLabel } from '../ui/classes';
 
@@ -49,51 +51,51 @@ function OverviewTab({ detail }) {
   );
 }
 
+// One card per day — attendance, log score and the write-up all live together, so
+// there's never any doubt about which day a given write-up belongs to (previously a
+// wide table separated them, and most cells had no explicit text color at all, which
+// made them read as blank).
 function LogsTab({ history }) {
   const [openDay, setOpenDay] = useState(null);
   if (!history?.length) return <div className="text-sm text-gray-400">No days recorded yet.</div>;
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
-            <th className="px-3 py-2 text-left">Day</th>
-            <th className="px-3 py-2 text-left">Attendance</th>
-            <th className="px-3 py-2 text-left">Log score</th>
-            <th className="px-3 py-2 text-left hidden sm:table-cell">Staff note</th>
-            <th className="px-3 py-2 text-left">Write-up</th>
-          </tr>
-        </thead>
-        <tbody>
-          {history.map((h) => {
-            const open = openDay === h.code;
-            return (
-              <Fragment key={h.code}>
-                <tr className="border-b border-gray-100 dark:border-gray-700 last:border-0">
-                  <td className="px-3 py-2 whitespace-nowrap">{h.code} · {h.label}</td>
-                  <td className="px-3 py-2 font-mono">{h.attendance ?? '—'}</td>
-                  <td className="px-3 py-2 font-mono">{h.log_score ?? '—'}</td>
-                  <td className="px-3 py-2 text-gray-500 dark:text-gray-400 hidden sm:table-cell">{h.log_note || '—'}</td>
-                  <td className="px-3 py-2">
-                    <button type="button" disabled={!h.log_body} onClick={() => setOpenDay(open ? null : h.code)}
-                      className="flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed">
-                      {open ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                      {h.log_body ? 'View' : 'None'}
-                    </button>
-                  </td>
-                </tr>
-                {open && h.log_body && (
-                  <tr className="border-b border-gray-100 dark:border-gray-700 last:border-0">
-                    <td colSpan={5} className="px-3 pb-3">
-                      <div className={insetPanel}><DailyLogBody body={h.log_body} /></div>
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="space-y-2">
+      {history.map((h) => {
+        const open = openDay === h.code;
+        const hasWriteup = !!h.log_body;
+        return (
+          <div key={h.code} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="flex items-center gap-2.5 px-3.5 py-3 flex-wrap">
+              <span className="font-semibold text-gray-900 dark:text-white whitespace-nowrap">{h.code} · {h.label}</span>
+              <div className="flex items-center gap-2 flex-wrap ml-auto">
+                {h.attendance
+                  ? <Badge className={ATTENDANCE_BADGE[h.attendance]}>{ATTENDANCE_NAME[h.attendance]}</Badge>
+                  : <span className="text-xs text-gray-400">Attendance not marked</span>}
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 whitespace-nowrap">
+                  {h.log_score ? `Log score ${h.log_score}/5` : 'Not scored yet'}
+                </span>
+              </div>
+            </div>
+            {h.log_note && (
+              <div className="px-3.5 pb-2 text-xs text-gray-500 dark:text-gray-400">Staff note: {h.log_note}</div>
+            )}
+            <div className="px-3.5 pb-3">
+              {hasWriteup ? (
+                <button type="button" onClick={() => setOpenDay(open ? null : h.code)}
+                  className="flex items-center gap-1 text-xs font-semibold text-orange-600 dark:text-orange-400 hover:underline">
+                  {open ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                  {open ? 'Hide' : 'Read'} what they wrote for {h.code}
+                </button>
+              ) : (
+                <span className="text-xs text-gray-400">No write-up submitted for this day</span>
+              )}
+              {open && hasWriteup && (
+                <div className={`${insetPanel} mt-2`}><DailyLogBody body={h.log_body} /></div>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -189,8 +191,8 @@ function RatingsTab({ ratings }) {
         <tbody>
           {[...ratings].reverse().map((r) => (
             <tr key={r.weekStart} className="border-b border-gray-100 dark:border-gray-700 last:border-0">
-              <td className="px-3 py-2">{r.weekStart}</td>
-              <td className="px-3 py-2 font-mono">{r.score} / 5</td>
+              <td className="px-3 py-2 text-gray-900 dark:text-white">{r.weekStart}</td>
+              <td className="px-3 py-2 font-mono text-gray-900 dark:text-white">{r.score} / 5</td>
               <td className="px-3 py-2 text-gray-500 dark:text-gray-400 hidden sm:table-cell">{r.note || '—'}</td>
               <td className="px-3 py-2 text-xs text-gray-400">{r.submittedBy}</td>
             </tr>
@@ -201,30 +203,52 @@ function RatingsTab({ ratings }) {
   );
 }
 
+// A % progress bar looked empty for almost every real video here, since duration is
+// only known when a YouTube Data API key is configured (services/youtube.js) — with
+// no duration, `pct` is null and the bar just rendered as an invisible 0%-wide sliver.
+// Replaced with a plain status badge that never depends on knowing the duration.
+function watchedStatus(v) {
+  if (v.flaggedForSkipping) return { label: 'Skipped ahead — not counted', className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' };
+  if (v.completedAt) return { label: 'Watched', className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' };
+  if (v.secondsWatched > 0) return { label: 'Started, not finished', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' };
+  return { label: 'Not watched yet', className: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' };
+}
+
+function formatWatched(seconds) {
+  if (!seconds) return null;
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  if (m === 0) return `${s} sec`;
+  return s === 0 ? `${m} min` : `${m} min ${s} sec`;
+}
+
 function VideosTab({ videos, onReset, canReset }) {
   if (!videos) return <div className="text-sm text-gray-400">Loading…</div>;
-  if (!videos.length) return <div className="text-sm text-gray-400">No videos watched yet.</div>;
+  if (!videos.length) return <div className="text-sm text-gray-400">No videos assigned yet.</div>;
   return (
     <div className="space-y-2">
-      {videos.map((v) => (
-        <div key={v.videoId} className={`${insetPanel} flex items-center gap-3`}>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">{v.title}</div>
-            <div className="text-xs text-gray-400">{v.channel}</div>
-            {v.flaggedForSkipping && (
-              <div className="text-xs font-medium text-red-600 dark:text-red-400 mt-0.5">Skipped ahead — not counted as watched</div>
-            )}
+      {videos.map((v) => {
+        const status = watchedStatus(v);
+        const watchedText = formatWatched(v.secondsWatched);
+        return (
+          <div key={v.videoId} className={insetPanel}>
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex-1 min-w-[140px]">
+                <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">{v.title}</div>
+                <div className="text-xs text-gray-400">{v.channel}</div>
+              </div>
+              <Badge className={status.className}>{status.label}</Badge>
+              {v.flaggedForSkipping && canReset && (
+                <button onClick={() => onReset(v.videoId)} className={`${btn.secondary} !px-2.5 !py-1 text-xs`}>Reset</button>
+              )}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+              {watchedText ? `Watched so far: ${watchedText}` : "Hasn't opened this video yet"}
+              {v.completedAt && ` · Finished on ${fmtDate(v.completedAt)}`}
+            </div>
           </div>
-          <div className="w-24 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">
-            <div className={`h-full ${v.flaggedForSkipping ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${v.pct ?? 0}%` }} />
-          </div>
-          <span className="text-xs font-mono text-gray-500 dark:text-gray-400 w-10 text-right flex-shrink-0">{v.pct != null ? `${v.pct}%` : '—'}</span>
-          {v.completedAt && <Check className="w-4 h-4 text-green-600 flex-shrink-0" />}
-          {v.flaggedForSkipping && canReset && (
-            <button onClick={() => onReset(v.videoId)} className={`${btn.secondary} !px-2.5 !py-1 text-xs flex-shrink-0`}>Reset</button>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
