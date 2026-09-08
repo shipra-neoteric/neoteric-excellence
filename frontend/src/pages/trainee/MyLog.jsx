@@ -19,14 +19,16 @@ export default function MyLog() {
   const { getThemeColor } = useTheme();
   const [days, setDays] = useState(null);
   const [dayCode, setDayCode] = useState(null);
+  const [history, setHistory] = useState(null); // this trainee's own past write-ups, by day code
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(null); // null | 'saved' | 'queued'
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api.get(`/batches/${BATCH_ID}/days`).then((d) => {
+    Promise.all([api.get(`/batches/${BATCH_ID}/days`), api.get('/trainees/me')]).then(([d, me]) => {
       setDays(d);
+      setHistory(me.history);
       // Default to today's actual date — not the last day in the list, which used to
       // silently be several days in the future (see batches.js's ensureTodayDay).
       const todayStr = new Date().toISOString().slice(0, 10);
@@ -39,12 +41,23 @@ export default function MyLog() {
     return () => window.removeEventListener('online', flush);
   }, []);
 
+  // Picking any day — today or a back date — loads whatever this trainee already
+  // wrote for it, so they can see (and, same as before, still update) a past entry
+  // instead of always facing a blank form.
+  useEffect(() => {
+    if (!dayCode || !history) return;
+    setForm(history.find((h) => h.code === dayCode)?.log_body ?? emptyForm);
+    setStatus(null);
+  }, [dayCode, history]);
+
   const day = days?.find((d) => d.code === dayCode);
+  const alreadySubmitted = !!history?.find((h) => h.code === dayCode)?.log_body;
 
   async function save() {
     if (!day) return;
     setSaving(true);
     setError(null);
+    let succeeded = true;
     try {
       await postLog(day.id, form);
       setStatus('saved');
@@ -57,9 +70,13 @@ export default function MyLog() {
         setStatus('queued');
       } else {
         setError(e.message);
+        succeeded = false;
       }
     } finally {
       setSaving(false);
+    }
+    if (succeeded) {
+      setHistory((h) => h?.map((entry) => (entry.code === dayCode ? { ...entry, log_body: form } : entry)));
     }
   }
 
@@ -69,9 +86,15 @@ export default function MyLog() {
   return (
     <div>
       <div className="mb-4">
-        <ThemedSelect value={dayCode} onChange={(v) => { setDayCode(v); setStatus(null); }}
+        <ThemedSelect value={dayCode} onChange={setDayCode}
           options={days.map((d) => ({ value: d.code, label: `${d.code} · ${d.label}` }))} />
       </div>
+
+      {alreadySubmitted && (
+        <div className="mb-4">
+          <AlertBanner level="info">You already submitted a log for this day — shown below. Change anything and submit again to update it.</AlertBanner>
+        </div>
+      )}
 
       <div className="space-y-3">
         {PROMPTS.map((p) => (
