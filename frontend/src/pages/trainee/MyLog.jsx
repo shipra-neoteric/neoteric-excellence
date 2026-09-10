@@ -6,6 +6,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { DAILY_LOG_PROMPTS as PROMPTS } from '../../dailyLogPrompts';
 import { queueLog, syncQueuedLogs } from '../../offline/logQueue';
 import { btnPrimaryBase, card, microLabel, primaryStyle } from '../../ui/classes';
+import { toastSuccess } from '../../ui/confirm';
 
 const BATCH_ID = 'b1';
 
@@ -61,6 +62,7 @@ export default function MyLog() {
     try {
       await postLog(day.id, form);
       setStatus('saved');
+      toastSuccess(alreadySubmitted ? 'Log updated!' : 'Log submitted!');
     } catch (e) {
       // Network failure (offline) vs. a real server error (e.g. session expired):
       // only queue the former — a real error should surface, not silently disappear.

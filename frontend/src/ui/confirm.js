@@ -24,3 +24,19 @@ export async function confirmDelete(label) {
   });
   return isConfirmed;
 }
+
+// A brief, self-dismissing confirmation toast — for "this just succeeded" moments
+// (e.g. a trainee submitting their daily log) that need to be genuinely noticeable,
+// not just a small line of text sitting on the page that's easy to miss and
+// disappears the moment you touch anything else.
+export function toastSuccess(message) {
+  return Swal.fire({
+    toast: true,
+    position: 'top',
+    icon: 'success',
+    title: message,
+    showConfirmButton: false,
+    timer: 2200,
+    timerProgressBar: true,
+  });
+}
