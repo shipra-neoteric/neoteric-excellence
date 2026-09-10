@@ -74,6 +74,13 @@ export default function DatePicker({ value, onChange, placeholder = 'Not schedul
 
   function toggle() {
     if (!open) {
+      // Dismiss any keyboard already open from a different field on the page (e.g. a
+      // title/text input the user was just typing in) before measuring — otherwise the
+      // popup gets positioned against a viewport the keyboard is about to grow back
+      // into, and visualViewport's resize listener below corrects it a beat later.
+      if (document.activeElement instanceof HTMLElement && document.activeElement !== triggerRef.current) {
+        document.activeElement.blur();
+      }
       setRect(computeRect(triggerRef.current));
       const base = selected ?? { y: today.getFullYear(), m: today.getMonth() };
       setViewY(base.y);

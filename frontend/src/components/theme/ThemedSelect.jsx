@@ -65,6 +65,13 @@ export default function ThemedSelect({ value, onChange, options, placeholder = '
 
   function toggle() {
     if (!open) {
+      // Dismiss any keyboard already open from a different field on the page (e.g. a
+      // note/text input the user was just typing in) before measuring — otherwise the
+      // popup gets positioned against a viewport the keyboard is about to grow back
+      // into, and visualViewport's resize listener below corrects it a beat later.
+      if (document.activeElement instanceof HTMLElement && document.activeElement !== triggerRef.current) {
+        document.activeElement.blur();
+      }
       setRect(computeRect(triggerRef.current));
       setQuery('');
     }
@@ -93,7 +100,11 @@ export default function ThemedSelect({ value, onChange, options, placeholder = '
           {showSearch && (
             <div className="relative p-2 border-b border-gray-100 dark:border-gray-700">
               <Search className="w-3.5 h-3.5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)}
+              {/* No autoFocus: it used to pop the mobile keyboard the instant the popup
+                  opened (this fires for any list over 8 options — e.g. Daily Entry's day
+                  picker, which only ever grows now that the day calendar self-extends),
+                  immediately covering the option list before anyone asked to search. */}
+              <input value={query} onChange={(e) => setQuery(e.target.value)}
                 className="w-full pl-8 pr-2 py-1.5 text-sm border rounded bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white" />
             </div>
           )}
