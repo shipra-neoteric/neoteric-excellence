@@ -32,29 +32,49 @@ export default function DatePicker({ value, onChange, placeholder = 'Not schedul
   const triggerRef = useRef(null);
   const popupRef = useRef(null);
 
+  // Computed against the VISUAL viewport (window.visualViewport), not
+  // window.innerHeight/innerWidth — on iOS Safari, window.innerHeight does NOT
+  // shrink when the on-screen keyboard appears (only the visual viewport does), so
+  // using it left the popup positioned as if the full screen were still visible,
+  // landing it partly underneath the keyboard whenever a keyboard was already open
+  // (e.g. from a text field elsewhere in the same form) when this was opened.
+  function computeRect(triggerEl) {
+    const r = triggerEl.getBoundingClientRect();
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    const vw = window.visualViewport?.width ?? window.innerWidth;
+    const openUpward = vh - r.bottom < 320 && r.top > 320;
+    const margin = 8;
+    const width = 260;
+    const left = Math.min(Math.max(r.left, margin), vw - width - margin);
+    return { left, openUpward, top: r.bottom + 4, bottom: vh - r.top + 4 };
+  }
+
   useEffect(() => {
     if (!open) return;
     function onDocClick(e) {
       if (triggerRef.current?.contains(e.target) || popupRef.current?.contains(e.target)) return;
       setOpen(false);
     }
-    function onResize() { setOpen(false); }
+    function onWindowResize() { setOpen(false); }
+    function onViewportResize() {
+      // The keyboard opening/closing shrinks or grows the visual viewport without
+      // necessarily firing a "resize" on window (notably on iOS Safari) —
+      // reposition in place instead of closing.
+      if (triggerRef.current) setRect(computeRect(triggerRef.current));
+    }
     document.addEventListener('mousedown', onDocClick);
-    window.addEventListener('resize', onResize);
+    window.addEventListener('resize', onWindowResize);
+    window.visualViewport?.addEventListener('resize', onViewportResize);
     return () => {
       document.removeEventListener('mousedown', onDocClick);
-      window.removeEventListener('resize', onResize);
+      window.removeEventListener('resize', onWindowResize);
+      window.visualViewport?.removeEventListener('resize', onViewportResize);
     };
   }, [open]);
 
   function toggle() {
     if (!open) {
-      const r = triggerRef.current.getBoundingClientRect();
-      const openUpward = window.innerHeight - r.bottom < 320 && r.top > 320;
-      const margin = 8;
-      const width = 260;
-      const left = Math.min(Math.max(r.left, margin), window.innerWidth - width - margin);
-      setRect({ top: r.top, bottom: r.bottom, left, openUpward });
+      setRect(computeRect(triggerRef.current));
       const base = selected ?? { y: today.getFullYear(), m: today.getMonth() };
       setViewY(base.y);
       setViewM(base.m);
@@ -97,7 +117,7 @@ export default function DatePicker({ value, onChange, placeholder = 'Not schedul
       {open && rect && createPortal(
         <div ref={popupRef}
           className="fixed z-[10050] w-[260px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl p-3"
-          style={{ left: rect.left, ...(rect.openUpward ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 }) }}
+          style={{ left: rect.left, ...(rect.openUpward ? { bottom: rect.bottom } : { top: rect.top }) }}
         >
           <div className="flex items-center justify-between mb-2">
             <button type="button" onClick={() => shiftMonth(-1)}

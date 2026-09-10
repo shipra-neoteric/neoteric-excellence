@@ -20,31 +20,52 @@ export default function ThemedSelect({ value, onChange, options, placeholder = '
     ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
     : options;
 
+  // The popup's own search input autoFocuses when it opens, which pops the mobile
+  // keyboard immediately — so position must be computed against the VISUAL viewport
+  // (window.visualViewport), not window.innerHeight/innerWidth. On iOS Safari in
+  // particular, window.innerHeight does NOT shrink when the keyboard appears (only
+  // the visual viewport does), so using it here left the popup positioned as if the
+  // full screen were still visible, landing part of it underneath the keyboard.
+  function computeRect(triggerEl) {
+    const r = triggerEl.getBoundingClientRect();
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    const vw = window.visualViewport?.width ?? window.innerWidth;
+    const openUpward = vh - r.bottom < 250 && r.top > 250;
+    const margin = 8;
+    const width = Math.min(Math.max(r.width, 180), vw - margin * 2);
+    const left = Math.min(Math.max(r.left, margin), vw - width - margin);
+    return { left, width, openUpward, top: r.bottom + 4, bottom: vh - r.top + 4 };
+  }
+
   useEffect(() => {
     if (!open) return;
     function onDocClick(e) {
       if (triggerRef.current?.contains(e.target) || popupRef.current?.contains(e.target)) return;
       setOpen(false);
     }
-    function onResize() {
+    function onWindowResize() {
       setOpen(false); // cached position would otherwise go stale (e.g. orientation change)
     }
+    function onViewportResize() {
+      // The keyboard opening/closing shrinks or grows the visual viewport without
+      // necessarily firing a "resize" on window (notably on iOS Safari) — reposition
+      // in place instead of closing, since it's often this very popup's own search
+      // input that just triggered the keyboard to appear.
+      if (triggerRef.current) setRect(computeRect(triggerRef.current));
+    }
     document.addEventListener('mousedown', onDocClick);
-    window.addEventListener('resize', onResize);
+    window.addEventListener('resize', onWindowResize);
+    window.visualViewport?.addEventListener('resize', onViewportResize);
     return () => {
       document.removeEventListener('mousedown', onDocClick);
-      window.removeEventListener('resize', onResize);
+      window.removeEventListener('resize', onWindowResize);
+      window.visualViewport?.removeEventListener('resize', onViewportResize);
     };
   }, [open]);
 
   function toggle() {
     if (!open) {
-      const r = triggerRef.current.getBoundingClientRect();
-      const openUpward = window.innerHeight - r.bottom < 250 && r.top > 250;
-      const margin = 8;
-      const width = Math.min(Math.max(r.width, 180), window.innerWidth - margin * 2);
-      const left = Math.min(Math.max(r.left, margin), window.innerWidth - width - margin);
-      setRect({ top: r.top, bottom: r.bottom, left, width, openUpward });
+      setRect(computeRect(triggerRef.current));
       setQuery('');
     }
     setOpen((o) => !o);
@@ -66,7 +87,7 @@ export default function ThemedSelect({ value, onChange, options, placeholder = '
           className="fixed z-[10050] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl overflow-hidden"
           style={{
             left: rect.left, width: Math.max(rect.width, 180),
-            ...(rect.openUpward ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 }),
+            ...(rect.openUpward ? { bottom: rect.bottom } : { top: rect.top }),
           }}
         >
           {showSearch && (
