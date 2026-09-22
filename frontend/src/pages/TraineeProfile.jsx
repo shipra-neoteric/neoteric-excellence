@@ -320,6 +320,7 @@ export default function TraineeProfile() {
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{detail.name}</h1>
             <span className="font-mono text-xs text-gray-400">{code}</span>
             <BandBadge band={detail.band} />
+            {detail.department && <DeptBadge department={detail.department} />}
             <Badge className={STATUS_BADGE[detail.status]}>{STATUS_LABEL[detail.status] ?? detail.status}</Badge>
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
