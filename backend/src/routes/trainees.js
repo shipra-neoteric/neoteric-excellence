@@ -24,6 +24,7 @@ async function serializeTrainee(t) {
     phone: t.person.phone ?? null,
     email: t.person.email ?? null,
     branch: t.branch,
+    department: t.department ?? null,
     pod: podNumber(t.pod),
     buddy: t.buddy?.name ?? null,
     status: t.status,
@@ -125,7 +126,7 @@ router.get('/:code', requirePermission('trainees', 'view'), async (req, res, nex
 // "who owns what" — all three touch trainee records).
 router.post('/', requirePermission('trainees', 'create'), async (req, res, next) => {
   try {
-    const { name, phone, email, password, branch, pod, baseline } = req.body;
+    const { name, phone, email, password, branch, department, pod, baseline } = req.body;
     if (!name || !pod) return res.status(400).json({ error: 'name and pod are required' });
     if (password && password.length < 8) return res.status(400).json({ error: 'password must be at least 8 characters' });
     if (password && !email) return res.status(400).json({ error: 'email is required to set a password' });
@@ -145,6 +146,7 @@ router.post('/', requirePermission('trainees', 'create'), async (req, res, next)
       pod: podDoc._id,
       buddy: podDoc.buddy,
       branch: branch || '',
+      department: department || undefined,
       baselineScore: baseline ?? null,
       status: 'active',
     });
@@ -162,7 +164,7 @@ router.put('/:code', requirePermission('trainees', 'edit'), async (req, res, nex
     const t = await Trainee.findOne({ code: req.params.code });
     if (!t) return res.status(404).json({ error: 'unknown trainee' });
 
-    const { name, phone, email, password, branch, pod, status, baseline } = req.body;
+    const { name, phone, email, password, branch, department, pod, status, baseline } = req.body;
     if (password && password.length < 8) return res.status(400).json({ error: 'password must be at least 8 characters' });
 
     if (baseline != null) {
@@ -172,6 +174,7 @@ router.put('/:code', requirePermission('trainees', 'edit'), async (req, res, nex
       t.baselineScore = baseline;
     }
     if (branch != null) t.branch = branch;
+    if (department != null) t.department = department;
     if (status != null) t.status = status;
     if (pod != null) {
       const podDoc = await resolvePod(pod);

@@ -7,6 +7,7 @@ const traineeSchema = new mongoose.Schema({
   pod: { type: mongoose.Schema.Types.ObjectId, ref: 'Pod', required: true },
   buddy: { type: mongoose.Schema.Types.ObjectId, ref: 'Person' },
   branch: String,
+  department: { type: String, enum: ['SUP', 'QC', 'MEA', 'STR'] },
   baseLocation: String,
   joiningDate: Date,
   baselineScore: { type: Number, min: 0, max: 100 }, // write-once — SPEC.md §8
