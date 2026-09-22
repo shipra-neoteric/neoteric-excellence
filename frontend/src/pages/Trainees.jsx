@@ -5,7 +5,7 @@ import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import AlertBanner from '../components/AlertBanner';
 import PodBuddyPanel from '../components/PodBuddyPanel';
-import { Badge, BAND_NAME, BandBadge, STATUS_BADGE, STATUS_LABEL } from '../components/StatusBadge';
+import { Badge, BAND_NAME, BandBadge, DeptBadge, STATUS_BADGE, STATUS_LABEL } from '../components/StatusBadge';
 import ThemedSelect from '../components/theme/ThemedSelect';
 import TraineeDrawer from '../components/TraineeDrawer';
 import { useTheme } from '../context/ThemeContext';
@@ -94,6 +94,7 @@ export default function Trainees() {
             <tr className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
               <th className="px-4 py-2.5 text-left">Trainee</th>
               <th className="px-4 py-2.5 text-left hidden sm:table-cell">Pod</th>
+              <th className="px-4 py-2.5 text-left hidden sm:table-cell">Department</th>
               <th className="px-4 py-2.5 text-left">Band</th>
               <th className="px-4 py-2.5 text-left hidden lg:table-cell">Status</th>
               <th className="px-4 py-2.5 text-left hidden md:table-cell">Velocity</th>
@@ -104,7 +105,7 @@ export default function Trainees() {
           </thead>
           <tbody>
             {filtered.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-400">
+              <tr><td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-400">
                 {trainees.length === 0 ? 'No trainees yet.' : 'No trainees match these filters.'}
               </td></tr>
             )}
@@ -116,6 +117,7 @@ export default function Trainees() {
                   <div className="text-xs text-gray-500 dark:text-gray-400">{t.branch}</div>
                 </td>
                 <td className="px-4 py-3 text-xs font-mono text-gray-400 hidden sm:table-cell">P{t.pod}</td>
+                <td className="px-4 py-3 hidden sm:table-cell">{t.department ? <DeptBadge department={t.department} /> : <span className="text-gray-400">—</span>}</td>
                 <td className="px-4 py-3"><BandBadge band={t.band} /></td>
                 <td className="px-4 py-3 hidden lg:table-cell"><Badge className={STATUS_BADGE[t.status]}>{STATUS_LABEL[t.status] ?? t.status}</Badge></td>
                 <td className="px-4 py-3 font-mono text-gray-700 dark:text-gray-200 hidden md:table-cell">{t.velocity ?? '—'}</td>

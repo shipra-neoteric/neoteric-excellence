@@ -6,13 +6,14 @@ import { useTheme } from '../context/ThemeContext';
 import { btn, btnPrimaryBase, card, inputClass, label as labelClass, microLabel, primaryStyle } from '../ui/classes';
 import { confirmDelete } from '../ui/confirm';
 import AlertBanner from './AlertBanner';
-import { BandBadge } from './StatusBadge';
+import { BandBadge, DeptBadge, DEPT_NAME } from './StatusBadge';
 import Drawer from './Drawer';
 import ThemedSelect from './theme/ThemedSelect';
 
 const STATUSES = ['active', 'exited', 'gateway_passed', 'confirmed'];
+const DEPARTMENTS = ['SUP', 'QC', 'MEA', 'STR'];
 
-const emptyForm = { name: '', phone: '', email: '', password: '', branch: '', pod: 1, baseline: '', status: 'active' };
+const emptyForm = { name: '', phone: '', email: '', password: '', branch: '', department: '', pod: 1, baseline: '', status: 'active' };
 
 export default function TraineeDrawer({ code, onClose, onSaved }) {
   const { getThemeColor } = useTheme();
@@ -40,7 +41,7 @@ export default function TraineeDrawer({ code, onClose, onSaved }) {
       setDetail(d);
       setForm({
         name: d.name, phone: d.phone ?? '', email: d.email ?? '',
-        branch: d.branch ?? '', pod: d.pod, baseline: d.baseline ?? '', status: d.status,
+        branch: d.branch ?? '', department: d.department ?? '', pod: d.pod, baseline: d.baseline ?? '', status: d.status,
       });
     }).catch((e) => setError(e.message));
   }, [code, isCreate]);
@@ -58,6 +59,7 @@ export default function TraineeDrawer({ code, onClose, onSaved }) {
         phone: form.phone || null,
         email: form.email || null,
         branch: form.branch,
+        department: form.department || undefined,
         pod: Number(form.pod),
         baseline: form.baseline === '' ? null : Number(form.baseline),
       };
@@ -103,6 +105,7 @@ export default function TraineeDrawer({ code, onClose, onSaved }) {
         <>
           <div className="flex items-center gap-3 flex-wrap">
             <BandBadge band={detail.band} />
+            {detail.department && <DeptBadge department={detail.department} />}
             <span className="text-xs text-gray-500 dark:text-gray-400">Site buddy: {detail.buddy ?? '—'}</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -146,9 +149,16 @@ export default function TraineeDrawer({ code, onClose, onSaved }) {
             <input className={inputClass()} type="password" value={form.password} onChange={(e) => set('password', e.target.value)} />
             <div className="text-xs text-gray-400 mt-1">Phone + OTP always works regardless. This adds email + password as a second way in.</div>
           </div>
-          <div>
-            <label className={labelClass}>Branch / college</label>
-            <input className={inputClass()} value={form.branch} onChange={(e) => set('branch', e.target.value)} />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelClass}>Branch / college</label>
+              <input className={inputClass()} value={form.branch} onChange={(e) => set('branch', e.target.value)} />
+            </div>
+            <div>
+              <label className={labelClass}>Department</label>
+              <ThemedSelect value={form.department} onChange={(v) => set('department', v)}
+                options={[{ value: '', label: '—' }, ...DEPARTMENTS.map((d) => ({ value: d, label: DEPT_NAME[d] }))]} />
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
