@@ -33,13 +33,28 @@ export const STATUS_BADGE = {
 };
 export const STATUS_LABEL = { active: 'Active', exited: 'Exited', gateway_passed: 'Gateway passed', confirmed: 'Confirmed' };
 
-export const DEPT_BADGE = {
-  SUP: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  QC: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-  MEA: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
-  STR: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
-};
-export const DEPT_NAME = { SUP: 'Supervision', QC: 'Quality', MEA: 'Measurement', STR: 'Store' };
+// Departments are now an admin-editable list (backend/src/models/Department.js),
+// not a fixed 4-value set — so there's no longer a per-code color map to hardcode.
+// Instead, cycle a fixed palette deterministically by the code's own characters, so
+// the same department always gets the same color without needing to know the full
+// list up front.
+const DEPT_PALETTE = [
+  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+  'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+  'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
+  'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
+  'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
+];
+
+export function deptColorClass(code) {
+  if (!code) return DEPT_PALETTE[DEPT_PALETTE.length - 1];
+  let hash = 0;
+  for (const ch of code) hash = (hash * 31 + ch.charCodeAt(0)) % DEPT_PALETTE.length;
+  return DEPT_PALETTE[hash];
+}
 
 export function Badge({ className, children }) {
   return <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${className}`}>{children}</span>;
@@ -55,6 +70,10 @@ export function BandBadge({ band }) {
   );
 }
 
-export function DeptBadge({ department }) {
-  return <Badge className={DEPT_BADGE[department]}>{DEPT_NAME[department]}</Badge>;
+// `name` is the human label (looked up from the live department list via
+// useDepartments() — see departments.js); falls back to the raw code if the name
+// isn't known yet (e.g. still loading) or the department was since deleted.
+export function DeptBadge({ department, name }) {
+  if (!department) return null;
+  return <Badge className={deptColorClass(department)}>{name ?? department}</Badge>;
 }

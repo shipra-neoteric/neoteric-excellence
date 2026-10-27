@@ -6,6 +6,7 @@ import BuddyRating from '../models/BuddyRating.js';
 import ChecklistItem from '../models/ChecklistItem.js';
 import DailyLog from '../models/DailyLog.js';
 import Day from '../models/Day.js';
+import Department from '../models/Department.js';
 import Person from '../models/Person.js';
 import Pod from '../models/Pod.js';
 import Trainee from '../models/Trainee.js';
@@ -130,6 +131,7 @@ router.post('/', requirePermission('trainees', 'create'), async (req, res, next)
     if (!name || !pod) return res.status(400).json({ error: 'name and pod are required' });
     if (password && password.length < 8) return res.status(400).json({ error: 'password must be at least 8 characters' });
     if (password && !email) return res.status(400).json({ error: 'email is required to set a password' });
+    if (department && !(await Department.findOne({ code: department }))) return res.status(400).json({ error: 'invalid department' });
 
     const podDoc = await resolvePod(pod);
     if (!podDoc) return res.status(400).json({ error: `unknown pod ${pod}` });
@@ -166,6 +168,7 @@ router.put('/:code', requirePermission('trainees', 'edit'), async (req, res, nex
 
     const { name, phone, email, password, branch, department, pod, status, baseline } = req.body;
     if (password && password.length < 8) return res.status(400).json({ error: 'password must be at least 8 characters' });
+    if (department != null && !(await Department.findOne({ code: department }))) return res.status(400).json({ error: 'invalid department' });
 
     if (baseline != null) {
       if (t.baselineScore != null && baseline !== t.baselineScore) {

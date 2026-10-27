@@ -9,6 +9,7 @@ import {
   ATTENDANCE_BADGE, ATTENDANCE_NAME, Badge, BandBadge, DeptBadge, STATUS_BADGE, STATUS_LABEL,
 } from '../components/StatusBadge';
 import TraineeDrawer from '../components/TraineeDrawer';
+import { useDeptName } from '../departments';
 import { btn, card, insetPanel, microLabel } from '../ui/classes';
 
 const TABS = [
@@ -130,6 +131,7 @@ function ChecklistTab({ items, onSign, canSign }) {
 }
 
 function AssessmentsTab({ records, baseline }) {
+  const deptName = useDeptName();
   if (!records) return <div className="text-sm text-gray-400">Loading…</div>;
   const checkpoint = records.find((r) => r.kind === 'checkpoint');
   const gateway = records.find((r) => r.kind === 'gateway');
@@ -162,7 +164,7 @@ function AssessmentsTab({ records, baseline }) {
           <div className="grid sm:grid-cols-2 gap-2 mt-1.5">
             {drills.map((r) => (
               <div key={r.department} className={insetPanel}>
-                <div className="mb-1"><DeptBadge department={r.department} /></div>
+                <div className="mb-1"><DeptBadge department={r.department} name={deptName(r.department)} /></div>
                 <div className="text-sm font-bold text-gray-900 dark:text-white">{r.total ?? '—'} / 100</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Written {r.written} · Practical {r.practical} · Behavioural {r.behavioural}</div>
               </div>
@@ -257,6 +259,7 @@ export default function TraineeProfile() {
   const { code } = useParams();
   const navigate = useNavigate();
   const { can } = useAuth();
+  const deptName = useDeptName();
   const [detail, setDetail] = useState(null);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('overview');
@@ -320,7 +323,7 @@ export default function TraineeProfile() {
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">{detail.name}</h1>
             <span className="font-mono text-xs text-gray-400">{code}</span>
             <BandBadge band={detail.band} />
-            {detail.department && <DeptBadge department={detail.department} />}
+            {detail.department && <DeptBadge department={detail.department} name={deptName(detail.department)} />}
             <Badge className={STATUS_BADGE[detail.status]}>{STATUS_LABEL[detail.status] ?? detail.status}</Badge>
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">

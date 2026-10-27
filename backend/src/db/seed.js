@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import Batch from '../models/Batch.js';
 import Day from '../models/Day.js';
+import Department from '../models/Department.js';
 import Module from '../models/Module.js';
 import Person from '../models/Person.js';
 import Pod from '../models/Pod.js';
@@ -152,6 +153,19 @@ async function seedBatchIfEmpty() {
   console.log('Seeded dev data: 1 batch, 4 pods, 12 trainees, 10 days');
 }
 
+// The program's starting department list — Civil-trade specific (README.md), but
+// now just data: admins can rename/add/remove departments afterward (routes/
+// departments.js) without touching code, e.g. to run a different trade's program.
+const DEFAULT_DEPARTMENTS = [
+  ['SUP', 'Supervision'], ['QC', 'Quality'], ['MEA', 'Measurement'], ['STR', 'Store'],
+];
+
+async function seedDepartmentsIfEmpty() {
+  if (await Department.countDocuments()) return;
+  await Department.insertMany(DEFAULT_DEPARTMENTS.map(([code, name]) => ({ code, name })));
+  console.log(`Seeded ${DEFAULT_DEPARTMENTS.length} departments`);
+}
+
 async function seedModulesIfEmpty() {
   if (await Module.countDocuments()) return;
   await Module.insertMany(MODULES.map(([code, title, department], i) => ({
@@ -179,6 +193,7 @@ export async function seedIfEmpty() {
   await seedAdminIfMissing();
   await seedStaffIfMissing();
   await seedBatchIfEmpty();
+  await seedDepartmentsIfEmpty();
   await seedModulesIfEmpty();
   await seedRotationIfEmpty();
 }

@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { Router } from 'express';
+import Department from '../models/Department.js';
 import Module from '../models/Module.js';
 import ModuleNote from '../models/ModuleNote.js';
 import Video from '../models/Video.js';
@@ -11,8 +12,6 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
-const DEPARTMENTS = ['SUP', 'QC', 'MEA', 'STR'];
 
 const router = Router();
 
@@ -60,7 +59,7 @@ router.post('/', requirePermission('content', 'create'), async (req, res, next) 
     if (!code || !title || !department || sequence == null) {
       return res.status(400).json({ error: 'code, title, department and sequence are required' });
     }
-    if (!DEPARTMENTS.includes(department)) return res.status(400).json({ error: 'invalid department' });
+    if (!(await Department.findOne({ code: department }))) return res.status(400).json({ error: 'invalid department' });
     if (await Module.findOne({ code })) return res.status(400).json({ error: `a module with code ${code} already exists` });
 
     const mod = await Module.create({

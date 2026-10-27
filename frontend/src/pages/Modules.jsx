@@ -4,17 +4,16 @@ import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import AlertBanner from '../components/AlertBanner';
 import DatePicker from '../components/DatePicker';
-import { DeptBadge, DEPT_NAME, VIDEO_STATUS_BADGE } from '../components/StatusBadge';
+import { DeptBadge, VIDEO_STATUS_BADGE } from '../components/StatusBadge';
 import ThemedSelect from '../components/theme/ThemedSelect';
 import YouTubePlayer from '../components/YouTubePlayer';
 import { useTheme } from '../context/ThemeContext';
+import { useDepartments, useDeptName } from '../departments';
 import { btn, btnPrimaryBase, inputClass, insetPanel, microLabel, primaryStyle } from '../ui/classes';
 import { confirmDelete } from '../ui/confirm';
 import { fileToDataUrl } from '../ui/file';
 
-const DEPT_OPTIONS = Object.entries(DEPT_NAME).map(([value, label]) => ({ value, label }));
 const EMPTY_MODULE_FORM = { code: '', title: '', department: '', sequence: '', releaseDate: null };
-const DEPT_TABS = [{ value: '', label: 'All' }, ...DEPT_OPTIONS];
 
 function fileIcon(fileType, fileName) {
   const ext = (fileName ?? '').split('.').pop()?.toLowerCase();
@@ -25,6 +24,10 @@ function fileIcon(fileType, fileName) {
 export default function Modules() {
   const { can } = useAuth();
   const { getThemeColor } = useTheme();
+  const departments = useDepartments();
+  const deptName = useDeptName();
+  const DEPT_OPTIONS = departments.map((d) => ({ value: d.code, label: d.name }));
+  const DEPT_TABS = [{ value: '', label: 'All' }, ...DEPT_OPTIONS];
   const [modules, setModules] = useState(null);
   const [error, setError] = useState(null);
   const [playing, setPlaying] = useState(null);
@@ -272,7 +275,7 @@ export default function Modules() {
             ) : (
               <>
                 <span className="flex-1 font-semibold text-gray-900 dark:text-white min-w-[140px]">{m.title}</span>
-                <DeptBadge department={m.department} />
+                <DeptBadge department={m.department} name={deptName(m.department)} />
               </>
             )}
 

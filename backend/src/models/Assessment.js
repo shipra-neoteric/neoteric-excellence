@@ -7,8 +7,9 @@ const assessmentSchema = new mongoose.Schema({
     enum: ['baseline', 'checkpoint', 'drill', 'capstone', 'gateway'],
     required: true,
   },
-  // only set for kind: 'drill' — one drill mark per department per trainee
-  department: { type: String, enum: ['SUP', 'QC', 'MEA', 'STR'], default: null },
+  // only set for kind: 'drill' — one drill mark per department per trainee.
+  // References Department.code — see Trainee.js for why this isn't a fixed enum.
+  department: { type: String, default: null },
   written: Number,
   practical: Number,
   behavioural: Number,

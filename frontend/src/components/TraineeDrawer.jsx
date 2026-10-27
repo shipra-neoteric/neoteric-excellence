@@ -3,21 +3,23 @@ import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useDepartments, useDeptName } from '../departments';
 import { btn, btnPrimaryBase, card, inputClass, label as labelClass, microLabel, primaryStyle } from '../ui/classes';
 import { confirmDelete } from '../ui/confirm';
 import AlertBanner from './AlertBanner';
-import { BandBadge, DeptBadge, DEPT_NAME } from './StatusBadge';
+import { BandBadge, DeptBadge } from './StatusBadge';
 import Drawer from './Drawer';
 import ThemedSelect from './theme/ThemedSelect';
 
 const STATUSES = ['active', 'exited', 'gateway_passed', 'confirmed'];
-const DEPARTMENTS = ['SUP', 'QC', 'MEA', 'STR'];
 
 const emptyForm = { name: '', phone: '', email: '', password: '', branch: '', department: '', pod: 1, baseline: '', status: 'active' };
 
 export default function TraineeDrawer({ code, onClose, onSaved }) {
   const { getThemeColor } = useTheme();
   const { can } = useAuth();
+  const departments = useDepartments();
+  const deptName = useDeptName();
   const isCreate = !code;
   const [detail, setDetail] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -105,7 +107,7 @@ export default function TraineeDrawer({ code, onClose, onSaved }) {
         <>
           <div className="flex items-center gap-3 flex-wrap">
             <BandBadge band={detail.band} />
-            {detail.department && <DeptBadge department={detail.department} />}
+            {detail.department && <DeptBadge department={detail.department} name={deptName(detail.department)} />}
             <span className="text-xs text-gray-500 dark:text-gray-400">Site buddy: {detail.buddy ?? '—'}</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -157,7 +159,7 @@ export default function TraineeDrawer({ code, onClose, onSaved }) {
             <div>
               <label className={labelClass}>Department</label>
               <ThemedSelect value={form.department} onChange={(v) => set('department', v)}
-                options={[{ value: '', label: '—' }, ...DEPARTMENTS.map((d) => ({ value: d, label: DEPT_NAME[d] }))]} />
+                options={[{ value: '', label: '—' }, ...departments.map((d) => ({ value: d.code, label: d.name }))]} />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3">

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import AlertBanner from '../components/AlertBanner';
-import { BandBadge, DEPT_NAME } from '../components/StatusBadge';
+import { BandBadge } from '../components/StatusBadge';
 import ThemedSelect from '../components/theme/ThemedSelect';
 import { useTheme } from '../context/ThemeContext';
+import { useDepartments, useDeptName } from '../departments';
 import { btnPrimaryBase, inputClass, primaryStyle } from '../ui/classes';
 
 const MAX = { written: 40, practical: 30, behavioural: 30 };
-const DEPTS = ['SUP', 'QC', 'MEA', 'STR'];
 const KINDS = [
   { key: 'checkpoint', label: 'Checkpoint' },
   { key: 'drill', label: 'Department drill' },
@@ -36,8 +36,10 @@ function MarkInput({ max, value, onChange }) {
 
 export default function Assessment() {
   const { getThemeColor } = useTheme();
+  const departments = useDepartments();
+  const deptName = useDeptName();
   const [kind, setKind] = useState('checkpoint');
-  const [department, setDepartment] = useState('SUP');
+  const [department, setDepartment] = useState('');
   const [podFilter, setPodFilter] = useState('');
   const [rows, setRows] = useState(null);
   const [marks, setMarks] = useState({}); // used for drill/gateway — checkpoint reuses rows directly
@@ -48,6 +50,10 @@ export default function Assessment() {
   useEffect(() => {
     api.get('/trainees').then(setRows).catch((e) => setError(e.message));
   }, []);
+
+  useEffect(() => {
+    if (!department && departments.length) setDepartment(departments[0].code);
+  }, [department, departments]);
 
   useEffect(() => {
     setMarks({});
@@ -119,7 +125,7 @@ export default function Assessment() {
       {kind === 'drill' && (
         <div className="mb-4 w-48">
           <ThemedSelect value={department} onChange={setDepartment}
-            options={DEPTS.map((d) => ({ value: d, label: DEPT_NAME[d] }))} />
+            options={departments.map((d) => ({ value: d.code, label: d.name }))} />
         </div>
       )}
 
@@ -128,7 +134,7 @@ export default function Assessment() {
           {kind === 'checkpoint'
             ? 'Checkpoint = written (/40) + practical (/30) + behavioural (/30). Velocity and band recompute live below.'
             : kind === 'drill'
-              ? `Department drill for ${DEPT_NAME[department]} — one mark per trainee per department, doesn't affect their overall band.`
+              ? `Department drill for ${deptName(department)} — one mark per trainee per department, doesn't affect their overall band.`
               : 'Gateway — the Month 5 pass/continue assessment.'}
         </AlertBanner>
       </div>

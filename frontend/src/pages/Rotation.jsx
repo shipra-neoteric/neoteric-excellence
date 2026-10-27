@@ -4,18 +4,21 @@ import { api } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
 import AlertBanner from '../components/AlertBanner';
 import DatePicker from '../components/DatePicker';
-import { DeptBadge, DEPT_NAME } from '../components/StatusBadge';
+import { DeptBadge } from '../components/StatusBadge';
 import ThemedSelect from '../components/theme/ThemedSelect';
 import { useTheme } from '../context/ThemeContext';
+import { useDepartments, useDeptName } from '../departments';
 import { btn, btnPrimaryBase, card, inputClass, insetPanel, microLabel, primaryStyle } from '../ui/classes';
 import { confirmDelete } from '../ui/confirm';
 
-const DEPT_OPTIONS = Object.entries(DEPT_NAME).map(([value, label]) => ({ value, label }));
 const EMPTY_FORM = { podId: '', blockCode: '', department: '', startsOn: null, endsOn: null };
 
 export default function Rotation() {
   const { can } = useAuth();
   const { getThemeColor } = useTheme();
+  const departments = useDepartments();
+  const deptName = useDeptName();
+  const DEPT_OPTIONS = departments.map((d) => ({ value: d.code, label: d.name }));
   const [rows, setRows] = useState(null);
   const [pods, setPods] = useState(null);
   const [error, setError] = useState(null);
@@ -169,7 +172,7 @@ export default function Rotation() {
                   <div className="flex justify-between items-center gap-2">
                     <span className="text-sm text-gray-900 dark:text-white">{r.pod}</span>
                     <div className="flex items-center gap-1.5">
-                      <DeptBadge department={r.department} />
+                      <DeptBadge department={r.department} name={deptName(r.department)} />
                       {canEdit && (
                         <button onClick={() => startEdit(r)} title="Edit"
                           className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">

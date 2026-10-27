@@ -3,7 +3,8 @@ import mongoose from 'mongoose';
 const moduleSchema = new mongoose.Schema({
   code: { type: String, required: true, unique: true }, // "M01"
   title: { type: String, required: true },
-  department: { type: String, enum: ['SUP', 'QC', 'MEA', 'STR'], required: true },
+  // References Department.code — see Trainee.js for why this isn't a fixed enum.
+  department: { type: String, required: true },
   handbookSection: String,
   sequence: { type: Number, required: true },
   // LMS-style content gating: null = not yet scheduled, hidden from trainees; once

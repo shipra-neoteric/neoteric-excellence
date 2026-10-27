@@ -1,6 +1,6 @@
 import {
   Award, CheckSquare, ClipboardCheck, FileText, LayoutDashboard,
-  ListChecks, PlayCircle, RefreshCw, Settings as SettingsIcon, ShieldCheck, Star, Users,
+  ListChecks, Network, PlayCircle, RefreshCw, Settings as SettingsIcon, ShieldCheck, Star, Users,
 } from 'lucide-react';
 
 // Nav visibility per staff role (SPEC.md §4), keyed by the role string the
@@ -12,17 +12,17 @@ export const ROLES = {
   admin: {
     title: 'Administrator',
     note: 'Full access to everything, including user management and permissions.',
-    nav: ['dashboard', 'daily', 'trainees', 'assessment', 'modules', 'rotation', 'buddyRating', 'reports', 'users', 'settings'],
+    nav: ['dashboard', 'daily', 'trainees', 'assessment', 'modules', 'rotation', 'departments', 'buddyRating', 'reports', 'users', 'settings'],
   },
   supervisor: {
     title: 'Training Supervisor',
     note: 'Owner. Full access: assessments, bands, department allotment, and the Saturday review pack.',
-    nav: ['dashboard', 'daily', 'trainees', 'assessment', 'modules', 'rotation', 'reports'],
+    nav: ['dashboard', 'daily', 'trainees', 'assessment', 'modules', 'rotation', 'departments', 'reports'],
   },
   coordinator: {
     title: 'Training Coordinator',
     note: 'Runs it. Daily entry and trainee records. Cannot set bands or allot departments.',
-    nav: ['dashboard', 'daily', 'trainees', 'modules', 'rotation', 'reports'],
+    nav: ['dashboard', 'daily', 'trainees', 'modules', 'rotation', 'departments', 'reports'],
   },
   office: {
     title: 'Office Coordinator',
@@ -43,6 +43,7 @@ export const NAV = [
   { key: 'assessment', icon: ClipboardCheck, label: 'Assessment', path: '/assessment' },
   { key: 'modules', icon: PlayCircle, label: 'Modules & videos', path: '/modules' },
   { key: 'rotation', icon: RefreshCw, label: 'Rotation', path: '/rotation' },
+  { key: 'departments', icon: Network, label: 'Departments', path: '/departments' },
   { key: 'buddyRating', icon: Star, label: 'Weekly rating', path: '/buddy-rating' },
   { key: 'reports', icon: FileText, label: 'Monthly pack', path: '/reports' },
   { key: 'users', icon: ShieldCheck, label: 'Users', path: '/users' },

@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import Assessment from '../models/Assessment.js';
+import Department from '../models/Department.js';
 import Trainee from '../models/Trainee.js';
 import { requirePermission } from '../middleware/auth.js';
 
 const router = Router();
 const MAX = { written: 40, practical: 30, behavioural: 30 };
 const KINDS = new Set(['checkpoint', 'drill', 'gateway']);
-const DEPTS = new Set(['SUP', 'QC', 'MEA', 'STR']);
 
 function inRange(value, max) {
   return typeof value === 'number' && value >= 0 && value <= max;
@@ -24,11 +24,14 @@ router.put('/:kind/bulk', requirePermission('assessment', 'edit'), async (req, r
 
     const entries = req.body;
     if (!Array.isArray(entries)) return res.status(400).json({ error: 'expected an array' });
+    const validDepts = kind === 'drill'
+      ? new Set((await Department.find().select('code').lean()).map((d) => d.code))
+      : null;
     for (const e of entries) {
       if (!inRange(e.written, MAX.written) || !inRange(e.practical, MAX.practical) || !inRange(e.behavioural, MAX.behavioural)) {
         return res.status(400).json({ error: `invalid entry: ${JSON.stringify(e)}` });
       }
-      if (kind === 'drill' && !DEPTS.has(e.department)) {
+      if (kind === 'drill' && !validDepts.has(e.department)) {
         return res.status(400).json({ error: `drill entries need a valid department: ${JSON.stringify(e)}` });
       }
     }

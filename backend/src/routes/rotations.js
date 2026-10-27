@@ -1,10 +1,10 @@
 import { Router } from 'express';
+import Department from '../models/Department.js';
 import Pod from '../models/Pod.js';
 import Rotation from '../models/Rotation.js';
 import { requirePermission } from '../middleware/auth.js';
 
 const router = Router();
-const DEPARTMENTS = ['SUP', 'QC', 'MEA', 'STR'];
 
 function serialize(rotation, podName) {
   return {
@@ -39,7 +39,7 @@ router.post('/', requirePermission('rotation', 'create'), async (req, res, next)
     if (!podId || !blockCode || !department || !startsOn || !endsOn) {
       return res.status(400).json({ error: 'podId, blockCode, department, startsOn and endsOn are required' });
     }
-    if (!DEPARTMENTS.includes(department)) return res.status(400).json({ error: 'invalid department' });
+    if (!(await Department.findOne({ code: department }))) return res.status(400).json({ error: 'invalid department' });
     if (new Date(startsOn) > new Date(endsOn)) return res.status(400).json({ error: 'startsOn must be before endsOn' });
 
     const pod = await Pod.findById(podId).lean();
@@ -59,7 +59,7 @@ router.post('/', requirePermission('rotation', 'create'), async (req, res, next)
 router.put('/:id', requirePermission('rotation', 'edit'), async (req, res, next) => {
   try {
     const { podId, blockCode, department, startsOn, endsOn } = req.body;
-    if (department != null && !DEPARTMENTS.includes(department)) return res.status(400).json({ error: 'invalid department' });
+    if (department != null && !(await Department.findOne({ code: department }))) return res.status(400).json({ error: 'invalid department' });
 
     const existing = await Rotation.findById(req.params.id);
     if (!existing) return res.status(404).json({ error: 'unknown rotation block' });

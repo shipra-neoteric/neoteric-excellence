@@ -7,7 +7,9 @@ const traineeSchema = new mongoose.Schema({
   pod: { type: mongoose.Schema.Types.ObjectId, ref: 'Pod', required: true },
   buddy: { type: mongoose.Schema.Types.ObjectId, ref: 'Person' },
   branch: String,
-  department: { type: String, enum: ['SUP', 'QC', 'MEA', 'STR'] },
+  // Free-text code referencing Department.code (backend/src/models/Department.js) —
+  // no longer a fixed enum, since the department list itself is admin-editable now.
+  department: String,
   baseLocation: String,
   joiningDate: Date,
   baselineScore: { type: Number, min: 0, max: 100 }, // write-once — SPEC.md §8

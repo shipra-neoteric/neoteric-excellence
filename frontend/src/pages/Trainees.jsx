@@ -9,6 +9,7 @@ import { Badge, BAND_NAME, BandBadge, DeptBadge, STATUS_BADGE, STATUS_LABEL } fr
 import ThemedSelect from '../components/theme/ThemedSelect';
 import TraineeDrawer from '../components/TraineeDrawer';
 import { useTheme } from '../context/ThemeContext';
+import { useDeptName } from '../departments';
 import { btn, btnPrimaryBase, inputClass, primaryStyle } from '../ui/classes';
 
 const BAND_OPTIONS = [
@@ -21,6 +22,7 @@ const STATUS_OPTIONS = [{ value: '', label: 'All statuses' }, ...Object.entries(
 export default function Trainees() {
   const { getThemeColor } = useTheme();
   const { can } = useAuth();
+  const deptName = useDeptName();
   const navigate = useNavigate();
   const [trainees, setTrainees] = useState(null);
   const [error, setError] = useState(null);
@@ -117,7 +119,7 @@ export default function Trainees() {
                   <div className="text-xs text-gray-500 dark:text-gray-400">{t.branch}</div>
                 </td>
                 <td className="px-4 py-3 text-xs font-mono text-gray-400 hidden sm:table-cell">P{t.pod}</td>
-                <td className="px-4 py-3 hidden sm:table-cell">{t.department ? <DeptBadge department={t.department} /> : <span className="text-gray-400">—</span>}</td>
+                <td className="px-4 py-3 hidden sm:table-cell">{t.department ? <DeptBadge department={t.department} name={deptName(t.department)} /> : <span className="text-gray-400">—</span>}</td>
                 <td className="px-4 py-3"><BandBadge band={t.band} /></td>
                 <td className="px-4 py-3 hidden lg:table-cell"><Badge className={STATUS_BADGE[t.status]}>{STATUS_LABEL[t.status] ?? t.status}</Badge></td>
                 <td className="px-4 py-3 font-mono text-gray-700 dark:text-gray-200 hidden md:table-cell">{t.velocity ?? '—'}</td>

@@ -10,6 +10,7 @@ import TraineeProfile from './pages/TraineeProfile';
 import Assessment from './pages/Assessment';
 import Reports from './pages/Reports';
 import Modules from './pages/Modules';
+import Departments from './pages/Departments';
 import Rotation from './pages/Rotation';
 import BuddyRating from './pages/BuddyRating';
 import Users from './pages/Users';
@@ -33,6 +34,7 @@ function App() {
           <Route path="/assessment" element={<Assessment />} />
           <Route path="/modules" element={<Modules />} />
           <Route path="/rotation" element={<Rotation />} />
+          <Route path="/departments" element={<Departments />} />
           <Route path="/buddy-rating" element={<BuddyRating />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/users" element={<Users />} />
